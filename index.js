@@ -63,24 +63,24 @@ class Startup {
     }
 
     selectRoles() {
-        db.query(`SELECT role.id, role.title, role.salary, department.name AS "department name" FROM role INNER JOIN department ON role.department_id = department.id`, (err, rows) => {
-            console.table(rows);
-            this.action();
+        db.query(`SELECT role.id, role.title, role.salary, department.name AS "department name" 
+                  FROM role 
+                  INNER JOIN department 
+                  ON role.department_id = department.id
+                  `, (err, rows) => {
+                        console.table(rows);
+                        this.action();
         }) 
     }
 
     selectEmployees() {
-        db.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title 
-                  FROM employee 
+        db.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title
+                  FROM employee
                   INNER JOIN role 
                   ON employee.role_id = role.id
-                  UNION 
-                  SELECT employee.id, employee.first_name,  employee.last_name
-                  FROM employee 
-                  WHERE employee.manager_id = employee.id
                   `, (err, rows) => {
                       console.log(err)
-                    console.table(rows);
+                      console.table(rows);
                   })
     }
 
