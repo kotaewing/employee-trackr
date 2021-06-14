@@ -1,6 +1,7 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
 const cTable = require('console.table');
+const { text } = require('express');
 require('dotenv').config()
 
 // Connect to database
@@ -46,6 +47,18 @@ class Startup {
             if (answer.action === 'View All Employees') {
                 this.selectEmployees();
             }
+            if (answer.action === 'Add A Department') {
+                inquirer.prompt(
+                    {
+                        type: 'input',
+                        name: 'department',
+                        message: "What is the new department's name?"
+                    }
+                )
+                .then(answer => {
+                    this.addDepartment(answer.department);
+                })
+            }
             
 
 
@@ -69,7 +82,7 @@ class Startup {
                   ON role.department_id = department.id
                   `, (err, rows) => {
                         console.table(rows);
-                        this.action();
+                        this.actions();
         }) 
     }
 
@@ -84,11 +97,19 @@ class Startup {
                   ON department.id = role.department_id
                   `, (err, rows) => {
                       console.table(rows);
-                      this.action();
+                      this.actions();
                   })
     }
 
+    addDepartment(department) {
+        db.query(`INSERT INTO department (name)
+                  VALUES (?)
+        `, [department]);
+        this.actions();
+    }
+
     exit() {
+        console.log('Goodbye')
         process.exit();
     }
 }
