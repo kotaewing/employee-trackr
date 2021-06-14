@@ -67,10 +67,7 @@ class Startup {
             }
             
             if (answer.action === 'Add A Role') {
-                let departments
-                db.query(`SELECT name FROM department`, (err, rows) => {
-                    departments = rows;
-                });
+                let departments = db.query(`SELECT name FROM department`)
                 inquirer.prompt(
                     {
                         type: 'input',
@@ -86,9 +83,7 @@ class Startup {
                         type: 'list',
                         name: 'department',
                         message: "What is the new role's department?",
-                        choices: [
-                            departments
-                        ]
+                        choices: departments
                     }
                 )
                 .then(answer => {
@@ -156,14 +151,6 @@ class Startup {
         this.actions();
     }
 
-    query() {
-        var departments
-        db.query(`SELECT name FROM department`, (err, rows) => {
-            departments = rows;
-        });
-        console.log(departments)
-    }
-
     exit() {
         console.log('Goodbye')
         process.exit();
@@ -171,7 +158,7 @@ class Startup {
 }
 
 
-// new Startup().actions();
-new Startup().query();
+new Startup().actions();
+
 
 
