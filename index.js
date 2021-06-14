@@ -83,8 +83,8 @@ class Startup {
                   LEFT JOIN department
                   ON department.id = role.department_id
                   `, (err, rows) => {
-                      console.log(err)
                       console.table(rows);
+                      this.action();
                   })
     }
 
