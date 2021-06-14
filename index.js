@@ -41,12 +41,15 @@ class Startup {
             if (answer.action === 'View All Departments') {
                 this.selectDepartments();
             }
+            
             if (answer.action === 'View All Roles') {
                 this.selectRoles();
             }
+            
             if (answer.action === 'View All Employees') {
                 this.selectEmployees();
             }
+            
             if (answer.action === 'Add A Department') {
                 inquirer.prompt(
                     {
@@ -58,13 +61,50 @@ class Startup {
                 .then(answer => {
                     this.addDepartment(answer.department);
                 })
+                .catch(err => {
+                    console.log(err)
+                })
             }
             
-
+            if (answer.action === 'Add A Role') {
+                let departments
+                db.query(`SELECT name FROM department`, (err, rows) => {
+                    departments = rows;
+                });
+                inquirer.prompt(
+                    {
+                        type: 'input',
+                        name: 'title',
+                        message: "What is the new role's title?"
+                    },
+                    {
+                        type: 'input',
+                        name: 'salary',
+                        message: "What is the new role's salary?"
+                    },
+                    {
+                        type: 'list',
+                        name: 'department',
+                        message: "What is the new role's department?",
+                        choices: [
+                            departments
+                        ]
+                    }
+                )
+                .then(answer => {
+                    this.addRole(answer);
+                })
+                .catch(err => {
+                    console.log(err)
+                })
+            }
 
             if (answer.action === 'Exit Application') {
                 this.exit();
             }
+        })
+        .catch(err => {
+            console.log(err)
         })
     }
 
@@ -107,6 +147,22 @@ class Startup {
         `, [department]);
         this.actions();
     }
+    
+    addRole(role) {
+        const departId = db.query(`SELECT id FROM department WHERE name = ?`, [role.department]);
+        db.query(`INSERT INTO role (title, salary, department_id)
+                  VALUES (?,?,?)
+        `, [role.title, role.salary, departId]);
+        this.actions();
+    }
+
+    query() {
+        var departments
+        db.query(`SELECT name FROM department`, (err, rows) => {
+            departments = rows;
+        });
+        console.log(departments)
+    }
 
     exit() {
         console.log('Goodbye')
@@ -115,6 +171,7 @@ class Startup {
 }
 
 
-new Startup().actions();
+// new Startup().actions();
+new Startup().query();
 
 
