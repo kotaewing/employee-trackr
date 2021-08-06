@@ -1,3 +1,5 @@
+-- the purpose of this file is to fill the database with information
+
 INSERT INTO department (name)
 VALUES  
     ('Sales'),

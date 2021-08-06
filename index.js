@@ -1,7 +1,6 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
 const cTable = require('console.table');
-const { text } = require('express');
 require('dotenv').config()
 
 // Connect to database
@@ -17,6 +16,7 @@ const db = mysql.createConnection(
 
 console.log('Welcome to Employee Trakr')
 
+// initialize function to select options
 async function actions() {
     const { actionList } = await inquirer.prompt(
         {
@@ -36,6 +36,7 @@ async function actions() {
         }
     );
 
+    // uses a switch to route each answer to their respective function for handling
     switch (actionList) {
         case 'View All Departments':
             selectDepartments();
@@ -64,13 +65,18 @@ async function actions() {
     }
 }
 
+
 async function selectDepartments() {
+    // selects all rows from the department table
     const departments = await db.promise().query(`SELECT * FROM department`)
+
+    // formats these as a table and puts them in the console
     console.table(departments[0]);
     actions();
 }
 
 async function selectRoles() {
+    // selects columns from the role table and joins the department name with it
     const roles = await db.promise().query(`SELECT role.id, role.title, role.salary, department.name AS department
                   FROM role 
                   INNER JOIN department 
@@ -82,6 +88,7 @@ async function selectRoles() {
 }
 
 async function selectEmployees() {
+    // selects columns from the employee, role, and department tables, joining each of them together to display as a complete table
     const employees = await db.promise().query(`SELECT employee.id, employee.first_name, employee.last_name, role.title AS title, department.name AS department, role.salary, CONCAT(manager.first_name, '', manager.last_name) AS manager
                   FROM employee
                   LEFT JOIN employee manager 
@@ -91,11 +98,13 @@ async function selectEmployees() {
                   LEFT JOIN department
                   ON department.id = role.department_id
                   `)
+
     console.table(employees[0]);
     actions();
 }
 
 async function addDepartment() {
+    // uses inquirer to ask for new department name
     const deptQuestion = await inquirer.prompt(
         {
             type: 'input',
@@ -104,17 +113,20 @@ async function addDepartment() {
         }
     );
 
-    const newDept = deptQuestion.department
-
+    // inserts new department into department table
     await db.promise().query(`INSERT INTO department (name)
                   VALUES (?)
-        `, [newDept]);
+        `, [deptQuestion.department]);
 
     actions();
 }
 
 async function addRole() {
+    // selects all from the department table
     const departmentQuery = await db.promise().query(`SELECT * FROM department`)
+    // maps through the returned query and creates on object for each with the properties name and value
+    // this is used to display the correct name in the inquirer prompt 
+    // but passes the id into the insert statement below
     const departments = departmentQuery[0].map((dep) => {
         return {
             name: dep.name,
@@ -141,6 +153,8 @@ async function addRole() {
         }
     ])
 
+    // inserts the answers from inquirer into the rolw table
+    // This is where we utilize that value: id property from above
     await db.promise().query(`INSERT INTO role (title, salary, department_id)
                   VALUES (?,?,?)
         `, [roleQuestion.title, roleQuestion.salary, roleQuestion.department]);
@@ -156,6 +170,9 @@ async function addEmployee() {
             value: role.id
         }
     })
+
+    // here, we select all from the employee table where the manager_id is null because those employees are managers
+    // this way, we can only show the list of managers and keep the options more specific for the user
     const managerQuery = await db.promise().query(`SELECT * FROM employee WHERE manager_id IS NULL`)
 
     const managers = managerQuery[0].map((manager) => {
@@ -166,6 +183,7 @@ async function addEmployee() {
     })
 
 
+    // this adds another option to choose from in case the new employee is a manager and does not need a manager value
     managers.unshift({ name: 'N/A', value: 'NULL' })
 
     const employeeQuestions = await inquirer.prompt([
