@@ -167,7 +167,6 @@ async function addEmployee() {
 
 
     managers.unshift({ name: 'N/A', value: 'NULL' })
-    console.log(managers);
 
     const employeeQuestions = await inquirer.prompt([
         {
