@@ -15,9 +15,9 @@ const db = mysql.createConnection(
     console.log('Connected to the Employee Trackr database.')
 );
 
+console.log('Welcome to Employee Trakr')
 
 async function actions() {
-    console.log('Welcome to Employee Trakr')
     const { actionList } = await inquirer.prompt(
         {
             type: 'list',
@@ -56,7 +56,7 @@ async function actions() {
             addEmployee();
             break;
         case 'Update An Employee Role':
-            updateEmployee();
+            updateEmployeeRole();
             break;
         case 'Exit Application':
             exit();
@@ -95,29 +95,34 @@ async function selectEmployees() {
     actions();
 }
 
-async function addDepartment(department) {
-    inquirer.prompt(
+async function addDepartment() {
+    const deptQuestion = await inquirer.prompt(
         {
             type: 'input',
             name: 'department',
             message: "What is the new department's name?"
         }
-    )
-        .then(answer => {
-            this.addDepartment(answer.department);
-        })
-        .catch(err => {
-            console.log(err)
-        })
-    db.query(`INSERT INTO department (name)
+    );
+
+    const newDept = deptQuestion.department
+
+    await db.promise().query(`INSERT INTO department (name)
                   VALUES (?)
-        `, [department]);
-    this.actions();
+        `, [newDept]);
+
+    actions();
 }
 
-async function addRole(role) {
-    const departments = db.query(`SELECT name FROM department`)
-    inquirer.prompt([
+async function addRole() {
+    const departmentQuery = await db.promise().query(`SELECT * FROM department`)
+    const departments = departmentQuery[0].map((dep) => {
+        return {
+            name: dep.name,
+            value: dep.id
+        }
+    })
+
+    const roleQuestion = await inquirer.prompt([
         {
             type: 'input',
             name: 'title',
@@ -135,15 +140,95 @@ async function addRole(role) {
             choices: departments
         }
     ])
-    const departId = db.query(`SELECT id FROM department WHERE name = ?`, [role.department]);
-    db.query(`INSERT INTO role (title, salary, department_id)
+
+    await db.promise().query(`INSERT INTO role (title, salary, department_id)
                   VALUES (?,?,?)
-        `, [role.title, role.salary, departId]);
-    this.actions();
+        `, [roleQuestion.title, roleQuestion.salary, roleQuestion.department]);
+
+    actions();
 }
 
-async function addEmployee(employee) {
+async function addEmployee() {
+    const roleQuery = await db.promise().query(`SELECT * FROM role`)
+    const roles = roleQuery[0].map((role) => {
+        return {
+            name: role.title,
+            value: role.id
+        }
+    })
+    const managerQuery = await db.promise().query(`SELECT * FROM employee WHERE manager_id IS NULL`)
 
+    const managers = managerQuery[0].map((manager) => {
+        return {
+            name: `${manager.first_name} ${manager.last_name}`,
+            value: manager.id
+        }
+    })
+
+
+    managers.unshift({ name: 'N/A', value: 'NULL' })
+    console.log(managers);
+
+    const employeeQuestions = await inquirer.prompt([
+        {
+            type: 'input',
+            name: 'firstName',
+            message: "What is the new employee's first name?"
+        },
+        {
+            type: 'input',
+            name: 'lastName',
+            message: "What is the new employee's last name?"
+        },
+        {
+            type: 'list',
+            name: 'role',
+            message: "What is the new employee's role?",
+            choices: roles
+        },
+        {
+            type: 'list',
+            name: 'manager',
+            message: "Who is the new employee's manager?",
+            choices: managers
+        }
+    ])
+
+    await db.promise().query(`INSERT INTO employee(first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)`, [employeeQuestions.firstName, employeeQuestions.lastName, employeeQuestions.role, employeeQuestions.manager])
+    actions();
+}
+
+async function updateEmployeeRole() {
+    const employeeQuery = await db.promise().query(`SELECT * FROM employee`)
+    const employees = employeeQuery[0].map((emp) => {
+        return {
+            name: `${emp.first_name} ${emp.last_name}`,
+            val: emp.id
+        }
+    })
+
+    const roleQuery = await db.promise().query(`SELECT * FROM role`)
+    const roles = roleQuery[0].map((role) => {
+        return {
+            name: role.title,
+            value: role.id
+        }
+    })
+
+    const updateQuestions = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'employee',
+            message: "Which employee's role would you like to update?",
+            choices: employees
+        },
+        {
+            type: 'list',
+            name: 'role',
+            message: "Which role would you like to assign?",
+            choices: roles
+        }
+    ])
 }
 
 function exit() {
