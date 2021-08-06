@@ -203,7 +203,7 @@ async function updateEmployeeRole() {
     const employees = employeeQuery[0].map((emp) => {
         return {
             name: `${emp.first_name} ${emp.last_name}`,
-            val: emp.id
+            value: emp.id
         }
     })
 
@@ -229,6 +229,9 @@ async function updateEmployeeRole() {
             choices: roles
         }
     ])
+
+    await db.promise().query(`UPDATE employee SET role_id = ? WHERE id = ?`, [updateQuestions.role, updateQuestions.employee])
+    actions();
 }
 
 function exit() {
